@@ -54,7 +54,10 @@ class Category:
         return log(med, 3600) * self.game.getGameWeight()
     
     def printPP(self):
-        print(self.name, ': ', self.getCatWeight())
+        print(self.name, ': ', self.game.getGameWeight(),  self.getCatWeight(), self.getCatWeight()/self.game.getGameWeight())
+        if len(self.runs) > 0:
+            print(self.runs[0].getRunWeight())
+
 
 
 class Run:
@@ -72,6 +75,12 @@ class Run:
 
     def __str__(self):
         return self.name
+
+    def __eq__(self, other):
+        return self.getRunWeight() == other.getRunWeight()
+
+    def __gt__(self, other):
+        return self.getRunWeight() > other.getRunWeight()
       
     def getRunWeight(self):
         if self.category.getCatWeight() == 0 or self.position == 0:
@@ -112,17 +121,17 @@ class Runner:
             print(run.getRunWeight())
     
     def sortRunsByPP(self):
-        runsDict = []
-        runsDictSort = {}
+        runsSort = []
+        runsList = []
         for run in self.runs:
-            runsDictSort[run] = run.getRunWeight()
-        runsDictSort = sorted(runsDictSort.items(), key=lambda x: x[1], reverse=True)
-        for run in runsDictSort:
-            runsDict.append(run[0])
-        self.runs = list(runsDict)
+            runsSort.append((run.getRunWeight(), run))
+        runsSort.sort(reverse=True)
+        for run in runsSort:
+            runsList.append(run[1])
+        self.runs = runsList
 
-    def writePP(self, position):
-        line1 = '%d|%s|%d|%d' % (position, self.name, len(self.runs), int(self.totalPP()))
+    def writePP(self, total, position):
+        line1 = '%d|%s|%d|%d' % (position, self.name, len(self.runs), int(total))
         line2 = '|||'
         weigth = 1
         for run in self.runs:
@@ -193,7 +202,6 @@ for game in getSeries:
                     runVars = False
                 games[gameID].categories.append(Category(catID, catName, varDict, games[gameID]))
                 print(catName)
-                #print(varDict)
         
         else:
             print(catName)
@@ -223,17 +231,23 @@ for game in getSeries:
                     #category.game.runs.append(thisRun)
                     #category.runs.append(thisRun)
                     #players[runnerID].runs.append(thisRun)
+        #category.printPP()
 
 
-allRunners = {}
+#allRunners = {}
+#for player in players:
+#    allRunners[players[player].id] = players[player].totalPP()
+#allRunners = sorted(allRunners.items(), key=lambda x: x[1], reverse=True)
+
+allRunners = []
 for player in players:
-    allRunners[players[player].id] = players[player].totalPP()
-allRunners = sorted(allRunners.items(), key=lambda x: x[1], reverse=True)
+    allRunners.append((players[player].totalPP(), players[player].id))
+allRunners.sort(reverse=True)
 
 i = 1
 for player in allRunners:
-    runner = players[player[0]]
-    runner.writePP(i)
+    runner = players[player[1]]
+    runner.writePP(player[0], i)
     i+=1
 
 rankingcsv.close()
